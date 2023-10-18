@@ -9,17 +9,59 @@ package edu.uw.complexkotlin
 // the final string should look like FIZZBUZZFIZZFIZZBUZZFIZZFIZZBUZZ for 0..15.
 // store this lambda into 'fizzbuzz' so that the tests can call it
 //
-val fizzbuzz : (IntRange) -> String = { _ -> "" }
+val fizzbuzz: (IntRange) -> String = { arr ->
+    arr.map { it ->
+        when {
+            (it % 3 == 0) && (it % 5 == 0) -> "FIZZBUZZ"
+            it % 3 == 0 -> "FIZZ"
+            it % 5 == 0 -> "BUZZ"
+            else -> ""
+        }
+    }.fold("") { acc, elem -> acc + elem }
+}
+
+val fizzbuzzdoh: (IntRange) -> String = { arr ->
+    arr.map { it ->
+        when {
+            (it % 3 == 0) && (it % 5 == 0) && (it % 7 == 0) -> "FIZZBUZZDOH"
+            (it % 3 == 0) && (it % 5 == 0) -> "FIZZBUZZ"
+            (it % 3 == 0) && (it % 7 == 0) -> "FIZZDOH"
+            (it % 5 == 0) && (it % 7 == 0) -> "BUZZDOH"
+            it % 3 == 0 -> "FIZZ"
+            it % 5 == 0 -> "BUZZ"
+            it % 7 == 0 -> "DOH"
+            else -> ""
+        }
+    }.fold("") { acc, elem -> acc + elem }
+}
+
+fun fizzbuzzgen(map: Map<Int, String>): (IntRange) -> String {
+    return { arr ->
+        arr.map { it ->
+            var res = "";
+            for ((num, str) in map) {
+                if (it % num == 0) res += str;
+            }
+            res.toString();
+        }.fold("") { acc, elem -> acc + elem }
+    }
+}
+
+// Testing Purposes
+fun getFizzbuzzOutput() {
+    println("fizzbuzz 50: " + fizzbuzz(1..50));
+    println("fizzbuzz 100: " + fizzbuzz(1..100));
+    println("fizzbuzzdoh 50 to 105: " + fizzbuzzdoh(50..105));
+    println("fizzbuzzdoh 20: " + fizzbuzzdoh(1..20));
+}
 
 // Example usage
-/*
-if (fizzbuzz(0..1) == "")
-    println("Success!")
-if (fizzbuzz(0..3) == "FIZZ")
-    println("Success!")
-if (fizzbuzz(0..5) == "BUZZ")
-    println("Success!")
-*/
+// if (fizzbuzz(0..1) == "")
+//     println("Success!")
+// if (fizzbuzz(0..3) == "FIZZ")
+//     println("Success!")
+// if (fizzbuzz(0..5) == "BUZZ")
+//     println("Success!")
 
 // This is a utility function for your use as you choose, and as an
 // example of an extension method
@@ -33,25 +75,87 @@ fun Int.times(block: () -> Unit): Unit {
 fun process(message: String, block: (String) -> String): String {
     return ">>> ${message}: {" + block(message) + "}"
 }
-// Create r1 as a lambda that calls process() with message "FOO" 
+
+// Create r1 as a lambda that calls process() with message "FOO"
 // and a block that returns "BAR"
-val r1 = { "" }
+val r1 = { process("FOO") { "BAR" } }
 
 // Create r2 as a lambda that calls process() with message "FOO" 
 // and a block that upper-cases r2_message, and repeats it three 
 // times with no spaces: "WOOGAWOOGAWOOGA"
 val r2_message = "wooga"
-val r2 = { "" }
+val r2 = {
+    process("FOO") {
+        var res = "";
+        3.times {
+            res += r2_message.toUpperCase();
+        }
+        res;
+    }
+}
+
+// Testing Purposes
+fun getR1R2Output() {
+    println("R1: " + r1());
+    println("R2: " + r2());
+}
 
 
 // write an enum-based state machine between talking and thinking
-enum class Philosopher { }
+enum class Philosopher {
+    THINKING {
+        override fun signal() = TALKING;
+        override fun toString() = "Deep thoughts....";
+    },
+    TALKING {
+        override fun signal() = THINKING;
+        override fun toString() = "Allow me to suggest an idea...";
+    };
+
+    abstract fun signal(): Philosopher;
+}
+
+// Extra Credit
+/*
+Seneca the Younger was a Roman philosopher who contributed to
+Stoic philosophy. He wrote "Letters to Lucilius" which advises
+readers on how to live a fulfilling good life.
+
+Stoic philosophy strongly emphasizes living in harmony with
+others and fulfilling social obligations, and was used as
+a framework for mindfulness and inner peace.
+ */
 
 // create an class "Command" that can be used as a function 
 // (provide an "invoke()" function)
 // that takes a single parameter ("message" of type String)
 // primary constructor should take a String argument ("prompt")
-// when invoked, the Command object should return a String c
-// ontaining the prompt and then the message.
+// when invoked, the Command object should return a String
+// containing the prompt and then the message.
 // Example: Command(": ")("Hello!") should print ": Hello!"
-class Command(val prompt: String) { }
+class Command(val prompt: String) {
+
+    operator fun invoke(message: String): String {
+        return prompt + message;
+    }
+}
+
+// Testing Purposes
+fun main() {
+    getFizzbuzzOutput();
+    getR1R2Output();
+
+    val fizzbuzzDefault = fizzbuzzgen(mapOf(2 to "CAT", 3 to "DOG", 5 to "HOT"));
+
+    val testCases = listOf(
+        1..15,
+        10..20,
+        1..7
+    );
+
+    for (testCase in testCases) {
+        println("Int Range: $testCase");
+        val res = fizzbuzzDefault(testCase);
+        println(res);
+    }
+}
